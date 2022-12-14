@@ -34,6 +34,8 @@ def calculate_percent_change(df: pd.DataFrame, column_name: str) -> pd.DataFrame
     # List to hold all of the quotients
     quotients = []
 
+    print(f"DF: {df}   Columns: #")
+
     for i in range(len(df[column_name])):
         if i == 0:
             anchor = df[column_name][i]
@@ -67,11 +69,17 @@ def plot_asset_comparison(assets: list, period: str = "5Y", interval: str = "1d"
     :param both: If the asset is being compared both in terms of United States Dollars and Bitcoin buying power.
     :return: None
     '''
+    if both:
+        if not in_BTC:
+            in_BTC = True
+
+
     # Customize the dimensions of the graph
-    fig = plt.figure(figsize=(10, 6))
+    fig = plt.figure(figsize=(18, 6))
     ax = fig.add_subplot(111)
 
     # Declare variables
+    df = None
     btc_df = None
 
     # If it is plotting in terms of Bitcoin, then it will download the relevant data regardless if it is in the asset list.
@@ -80,9 +88,13 @@ def plot_asset_comparison(assets: list, period: str = "5Y", interval: str = "1d"
 
     # Loop through every asset.
     for asset in assets:
+        print(f"Assets: {asset}")
         if asset == "BTC-USD":
-            df = btc_df
-        else:
+            if in_BTC:
+                df = btc_df
+            else:
+                df = yf.download(asset, period=period, interval=interval)
+        elif asset != "BTC-USD":
             df = yf.download(asset, period=period, interval=interval)
 
         # If it is comparing in terms of USD and BTC.
@@ -117,6 +129,7 @@ def plot_asset_comparison(assets: list, period: str = "5Y", interval: str = "1d"
                 ax.plot(df["BTC % Change"], label=ticker)
             # If comparing in terms of USD
             elif not in_BTC:
+                print(f"DF1111: {df}")
                 df = calculate_percent_change(df, column_name="Adj Close")
                 ax.plot(df["% Change"], label=asset)
 
@@ -137,9 +150,9 @@ def plot_asset_comparison(assets: list, period: str = "5Y", interval: str = "1d"
 "-----------------------------------------------"
 def main():
     # List of assets to compare
-    assets = ["BTC-USD","ETH-USD"]
+    assets = ["Your list here",""]
     # Plots the assets
-    plot_asset_comparison(assets, period="1Y", interval="1d", in_BTC=False, both=False)
+    plot_asset_comparison(assets, period="5Y", interval="1d", in_BTC=False, both=False)
 
 
 
@@ -159,5 +172,5 @@ ytd, max
 3mo
 """
 
-    
+
 main()
