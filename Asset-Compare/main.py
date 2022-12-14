@@ -27,14 +27,13 @@ def calculate_percent_change(df: pd.DataFrame, column_name: str) -> pd.DataFrame
     :return: pd.DataFrame
     '''
 
-    # Price of the beginning of the period.
+    # Price at the beginning of the period.
     anchor = 0
     # Result of division between prices.
     quotient = 0
     # List to hold all of the quotients
     quotients = []
 
-    print(f"DF: {df}   Columns: #")
 
     for i in range(len(df[column_name])):
         if i == 0:
