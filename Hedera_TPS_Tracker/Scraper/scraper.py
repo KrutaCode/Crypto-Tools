@@ -1,5 +1,4 @@
 import os
-import time
 import datetime as dt
 from PIL import Image, ImageOps
 from selenium import webdriver
@@ -9,15 +8,14 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException
 
 
-import requests
-from bs4 import BeautifulSoup
-
 
 hedera_txns = "https://hederatxns.com/"
 coinmarketcap = "https://coinmarketcap.com/currencies/hedera/"
 
 cwd = os.getcwd()
 chrome_driver = cwd + "\\Scraper\\chromedriver.exe"
+
+print(f"Chrome: {chrome_driver}")
 
 options = webdriver.ChromeOptions()
 options.add_argument('--disable-gpu')
@@ -28,6 +26,9 @@ class TpsScraper:
         # Declare variables
         self.hedera_txns_url = "https://hederatxns.com/"
         self.coinmarketcap_url = "https://coinmarketcap.com/currencies/hedera/"
+        self.hedera_revenue_url = "https://hedera.report/"
+        self.tvl_url = "https://defillama.com/chain/Hedera"
+        self.accounts_url = "https://app.dragonglass.me/hedera/home"
 
         self.mainet_tps = None
         self.testnet_tps = None
@@ -36,14 +37,21 @@ class TpsScraper:
         self.market_cap = None
         self.price = None
         self.rank = None
+        self.in_BTC = None
+        self.network_revenue = None
+        self.tvl = None
+        self.accounts = None
 
        # time.sleep(500)
 
-    '''-----------------------------------'''
+    '''----------------------------------- Setters -----------------------------------'''
 
     def set_mainnet_transactions(self) -> None:
-        if self.browser.current_url != self.hedera_txns_url:
-            self._redirect_browser(self.hedera_txns_url)
+        try:
+            if self.browser.current_url != self.hedera_txns_url:
+                self._redirect_browser(self.hedera_txns_url)
+        except AttributeError:
+            self.create_browser(self.hedera_txns_url)
         xpath = "/html/body/div[1]/div[2]/div/div[1]/div[1]/div[2]/span[1]"
         self.mainnet_txn = int(self.read_data_wait(
             xpath=xpath).replace(",", ""))
@@ -51,8 +59,11 @@ class TpsScraper:
     '''-----------------------------------'''
 
     def set_mainnet_tps(self) -> None:
-        if self.browser.current_url != self.hedera_txns_url:
-            self._redirect_browser(self.hedera_txns_url)
+        try:
+            if self.browser.current_url != self.hedera_txns_url:
+                self._redirect_browser(self.hedera_txns_url)
+        except AttributeError:
+            self.create_browser(self.hedera_txns_url)
         xpath = "/html/body/div[1]/div[2]/div/div[1]/div[1]/div[2]/span[2]"
         self.mainet_tps = int(self.read_data_wait(
             xpath=xpath).split(" ")[0][1:])
@@ -60,8 +71,11 @@ class TpsScraper:
     '''-----------------------------------'''
 
     def set_testnet_transactions(self) -> None:
-        if self.browser.current_url != self.hedera_txns_url:
-            self._redirect_browser(self.hedera_txns_url)
+        try:
+            if self.browser.current_url != self.hedera_txns_url:
+                self._redirect_browser(self.hedera_txns_url)
+        except AttributeError:
+            self.create_browser(self.hedera_txns_url)
         xpath = "/html/body/div[1]/div[2]/div/div[1]/div[2]/div[2]/span[1]"
         self.testnet_txn = int(self.read_data_wait(
             xpath=xpath).replace(",", ""))
@@ -69,37 +83,95 @@ class TpsScraper:
     '''-----------------------------------'''
 
     def set_testnet_tps(self) -> None:
-        if self.browser.current_url != self.hedera_txns_url:
-            self._redirect_browser(self.hedera_txns_url)
+        try:
+            if self.browser.current_url != self.hedera_txns_url:
+                self._redirect_browser(self.hedera_txns_url)
+        except AttributeError:
+            self.create_browser(self.hedera_txns_url)
         xpath = "/html/body/div[1]/div[2]/div/div[1]/div[2]/div[2]/span[2]"
         self.testnet_tps = int(self.read_data_wait(
             xpath=xpath).split(" ")[0][1:])
     '''-----------------------------------'''
 
     def set_marketcap(self) -> None:
-        if self.browser.current_url != self.coinmarketcap_url:
-            self._redirect_browser(self.coinmarketcap_url)
+        try:
+            if self.browser.current_url != self.coinmarketcap_url:
+                self._redirect_browser(self.coinmarketcap_url)
+        except AttributeError:
+            self.create_browser(self.coinmarketcap_url)
         xpath = "/html/body/div[1]/div/div[1]/div[2]/div/div[1]/div[2]/div/div[3]/div[1]/div[1]/div[1]/div[2]/div"
-        self.market_cap = float(
+        self.market_cap = int(
             self.read_data_wait(xpath).replace(",", "")[1:])
 
     '''-----------------------------------'''
 
     def set_price(self) -> None:
-        if self.browser.current_url != self.coinmarketcap_url:
-            self._redirect_browser(self.coinmarketcap_url)
+        try:
+            if self.browser.current_url != self.coinmarketcap_url:
+                self._redirect_browser(self.coinmarketcap_url)
+        except AttributeError:
+            self.create_browser(self.coinmarketcap_url)
         xpath = "/html/body/div[1]/div/div[1]/div[2]/div/div[1]/div[2]/div/div[2]/div[1]/div/span"
         self.price = float(self.read_data_wait(xpath)[1:])
 
     '''-----------------------------------'''
 
     def set_rank(self) -> None:
-        if self.browser.current_url != self.coinmarketcap_url:
-            self._redirect_browser(self.coinmarketcap_url)
+        try:
+            if self.browser.current_url != self.coinmarketcap_url:
+                self._redirect_browser(self.coinmarketcap_url)
+        except AttributeError:
+            self.create_browser(self.coinmarketcap_url)
         xpath = "/html/body/div[1]/div/div[1]/div[2]/div/div[1]/div[2]/div/div[1]/div[2]/div[1]"
         self.rank = int(self.read_data_wait(xpath).split(" ")[1][1:])
 
     '''-----------------------------------'''
+
+    def set_in_BTC_terms(self) -> None:
+        try:
+            if self.browser.current_url != self.coinmarketcap_url:
+                self._redirect_browser(self.coinmarketcap_url)
+        except AttributeError:
+            self.create_browser(self.coinmarketcap_url)
+        xpath = "/html/body/div[1]/div/div[1]/div[2]/div/div[1]/div[2]/div/div[2]/div[2]/p[1]"
+        self.in_BTC = self.read_data_wait(xpath).split(" ")[0]
+        # Convert from scientific notation to long float.
+        self.in_BTC = '{0:.9f}'.format(float(self.in_BTC))
+
+    '''-----------------------------------'''
+
+    def set_network_revenue(self) -> None:
+        try:
+            if self.browser.current_url != self.hedera_revenue_url:
+                self._redirect_browser(self.hedera_revenue_url)
+        except AttributeError:
+            self.create_browser(self.hedera_revenue_url)
+        xpath = "/html/body/flt-glass-pane"
+        self.network_revenue = self.read_data_wait(xpath)
+
+    def set_tvl(self) -> None:
+        try:
+            if self.browser.current_url != self.tvl_url:
+                self._redirect_browser(self.tvl_url)
+        except AttributeError:
+            self.create_browser(self.tvl_url)
+        xpath = "/html/body/div[1]/div/main/div[2]/div[1]/div[1]/p"
+        self.tvl = self.read_data_wait(xpath)
+        self.tvl = self._format_number(self.tvl)
+
+    '''-----------------------------------'''
+
+    def set_accounts(self) -> None:
+        try:
+            if self.browser.current_url != self.accounts_url:
+                self._redirect_browser(self.accounts_url)
+        except AttributeError:
+            self.create_browser(self.accounts_url)
+        xpath = "/html/body/div[1]/div/div[2]/div/div/div/div/div[4]/div/div[1]/div/div[2]/div/div[4]/span"
+        self.accounts = self.read_data_wait(xpath)
+        self.accounts = int(self.accounts.replace(",", ""))
+
+    '''----------------------------------- Getters -----------------------------------'''
 
     def get_mainnet_transactions(self) -> int:
         if self.mainnet_txn == None:
@@ -149,6 +221,34 @@ class TpsScraper:
         return self.rank
 
     '''-----------------------------------'''
+
+    def get_in_BTC(self) -> float:
+        if self.in_BTC == None:
+            self.set_in_BTC_terms()
+        return self.in_BTC
+
+    '''-----------------------------------'''
+
+    def get_network_revenue(self) -> int:
+        if self.network_revenue == None:
+            self.set_network_revenue()
+        return self.network_revenue
+
+    '''-----------------------------------'''
+
+    def get_tvl(self) -> int:
+        if self.tvl == None:
+            self.set_tvl()
+        return self.tvl
+
+    '''-----------------------------------'''
+
+    def get_accounts(self) -> int:
+        if self.accounts == None:
+            self.set_accounts()
+        return self.accounts
+
+    '''----------------------------------- Utilities -----------------------------------'''
 
     def read_data_wait(self, xpath: str):
         element = WebDriverWait(self.browser, 10).until(
@@ -237,3 +337,17 @@ class TpsScraper:
 
     def _redirect_browser(self, url: str) -> None:
         self.browser.get(url)
+
+    '''-----------------------------------'''
+
+    def _format_number(self, num: str) -> int:
+        num, extension = float(num[1:-1]), num[-1]
+
+        if extension == "m" or extension == "M":
+            multiplier = 1000000
+        elif extension == "b" or extension == "B":
+            multiplier = 1000000000
+        elif extension == "t" or extension == "T":
+            multiplier = 1000000000000
+        num *= multiplier
+        return int(num)
